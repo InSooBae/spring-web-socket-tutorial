@@ -1,31 +1,25 @@
 package com.socket.socketexample.domain.chatting.controller;
 
-import com.socket.socketexample.domain.chatting.domain.ChatRoom;
-import com.socket.socketexample.domain.chatting.request.ChatRoomReq;
-import com.socket.socketexample.domain.chatting.response.ChatRoomRes;
-import com.socket.socketexample.domain.chatting.service.ChatService;
+import com.socket.socketexample.domain.chatting.enums.MessageType;
+import com.socket.socketexample.domain.chatting.request.ChatMessageReq;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Controller;
 
 @RequiredArgsConstructor
-@RestController
+@Controller
 @Slf4j
-@RequestMapping("/chat")
 public class ChatController {
 
-    private final ChatService chatService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-    @PostMapping
-    public ChatRoomRes createRoom(@RequestBody ChatRoomReq chatRoomReq) {
-        log.info("ChatController - createRoom - chatRoomReq.roomTitle: {}", chatRoomReq.getRoomTitle());
-        return chatService.createRoom(chatRoomReq);
+    @MessageMapping("/chat/message")
+    public void createRoom(ChatMessageReq chatMessageReq) {
+        if (MessageType.JOIN.equals(chatMessageReq.getType()))
+            chatMessageReq.setMessage(chatMessageReq.getSender() + "님이 입장하셨습니다.");
+        messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessageReq.getRoomId(), chatMessageReq);
     }
 
-    @GetMapping
-    public List<ChatRoomRes> findAllRoom() {
-        return chatService.findAllRoom();
-    }
 }
