@@ -6,3 +6,4 @@ spring:
       enabled: false
   freemarker:
     cache: false
+    suffix: .ftl

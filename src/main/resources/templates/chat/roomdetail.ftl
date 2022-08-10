@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="/webjars/bootstrap/4.3.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/webjars/bootstrap/5.2.0/dist/css/bootstrap.min.css">
     <style>
         [v-cloak] {
             display: none;
@@ -36,14 +36,14 @@
     <div></div>
 </div>
 <!-- JavaScript -->
-<script src="/webjars/vue/2.5.16/dist/vue.min.js"></script>
-<script src="/webjars/axios/0.17.1/dist/axios.min.js"></script>
-<script src="/webjars/sockjs-client/1.1.2/sockjs.min.js"></script>
-<script src="/webjars/stomp-websocket/2.3.3-1/stomp.min.js"></script>
+<script src="/webjars/vue/2.6.14/dist/vue.min.js"></script>
+<script src="/webjars/axios/0.21.1/dist/axios.min.js"></script>
+<script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
 <script>
     //alert(document.title);
     // websocket & stomp initialize
-    var sock = new SockJS("/ws/chat");
+    var sock = new SockJS("/ws-stomp");
     var ws = Stomp.over(sock);
     var reconnect = 0;
     // vue.js
@@ -77,6 +77,7 @@
                 this.message = '';
             },
             recvMessage: function (recv) {
+                console.log(recv)
                 this.messages.unshift({
                     "type": recv.type,
                     "sender": recv.type == 'ENTER' ? '[알림]' : recv.sender,
@@ -102,7 +103,7 @@
             if (reconnect++ <= 5) {
                 setTimeout(function () {
                     console.log("connection reconnect");
-                    sock = new SockJS("/ws/chat/");
+                    sock = new SockJS("/ws-stomp");
                     ws = Stomp.over(sock);
                     connect();
                 }, 10 * 1000);
