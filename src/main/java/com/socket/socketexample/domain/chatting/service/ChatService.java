@@ -36,8 +36,8 @@ public class ChatService {
         return chatRoomMap.get(roomId);
     }
 
-    public ChatRoomRes createRoom(ChatRoomReq chatRoomReq) {
-        ChatRoom chatRoom = ChatRoom.create(chatRoomReq);
+    public ChatRoomRes createRoom(String roomName) {
+        ChatRoom chatRoom = ChatRoom.create(roomName);
         chatRoomMap.put(chatRoom.getRoomId(), chatRoom);
         return ChatRoomRes.of(chatRoom);
     }
