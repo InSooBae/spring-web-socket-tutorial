@@ -12,9 +12,6 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
-	all {
-		exclude group: 'ch.qos.logback', module: 'logback-classic'
-	}
 }
 
 repositories {
@@ -36,7 +33,7 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.9.0'
 
 	// embedded-redis
-	implementation 'it.ozimov:embedded-redis:0.7.3'
+	implementation ('it.ozimov:embedded-redis:0.7.3') { exclude group: "org.slf4j", module: "slf4j-simple" }
 
 
 
