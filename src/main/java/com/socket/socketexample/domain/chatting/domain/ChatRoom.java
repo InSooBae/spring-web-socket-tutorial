@@ -6,12 +6,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @Builder
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class ChatRoom {
+public class ChatRoom implements Serializable {
+
+    private static final long serialVersionUID = 8106356809648006881L;
 
     private final String roomId;
     private final String name;
