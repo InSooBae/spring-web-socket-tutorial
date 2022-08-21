@@ -12,6 +12,9 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	all {
+		exclude group: 'ch.qos.logback', module: 'logback-classic'
+	}
 }
 
 repositories {
