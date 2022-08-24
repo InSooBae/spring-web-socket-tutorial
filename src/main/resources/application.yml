@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: alpha
+    active: local
 
   devtools:
     livereload:
