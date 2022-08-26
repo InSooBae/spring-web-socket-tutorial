@@ -10,3 +10,6 @@ spring:
   freemarker:
     cache: false
     suffix: .ftl
+
+  jwt:
+    secret: \jVV9`-#SM~cPjpyJK<zZ.qspcg9C\7N5:!m7BK'$-f$W)*rYa-9.D\-6zlw,ua
