@@ -35,9 +35,8 @@ public class WebSocketConfig extends AbstractSecurityWebSocketMessageBrokerConfi
     @Override
     protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
         messages
-                .nullDestMatcher().authenticated()  // 대상이 없는 모든 메시지는 사용자 인증 요구
                 .simpDestMatchers("/chat/**").hasRole("USER")   // /chat/으로 시작하는 모든 메시지는 사용자에게 USER 역할이 있어야함
-                .anyMessage().denyAll();    // 이외 다른 메시지 거부
+                .anyMessage().authenticated();    // 이외 다른 메시지 인증
 
     }
 }
