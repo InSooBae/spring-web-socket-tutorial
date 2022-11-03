@@ -23,7 +23,6 @@ jar {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	// spring-boot-starter-freemarker
@@ -32,9 +31,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.security:spring-security-messaging'
 
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// redisson-spring-boot-starter
+	implementation 'org.redisson:redisson-spring-boot-starter:3.17.7'
+
 	implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
 
 	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+
 
 	implementation 'org.webjars.bower:bootstrap:5.2.0'
 	implementation 'org.webjars.bower:vue:2.6.14'

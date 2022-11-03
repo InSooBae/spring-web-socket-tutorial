@@ -48,5 +48,4 @@ public class WebSocketConfig extends AbstractSecurityWebSocketMessageBrokerConfi
         registration.interceptors(stompHandler);
     }
 
-
 }
