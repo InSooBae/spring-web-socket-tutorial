@@ -64,7 +64,7 @@ public class WebSecurityConfig {
                 User.builder()
                         .username("guest")
                         .password("{noop}1234")
-                        .roles("GUEST")
+                        .roles("USER")
                         .build()
         );
 

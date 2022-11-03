@@ -19,8 +19,16 @@ import java.util.List;
 public class ChatRoomController {
 
     private final ChatRoomRepository chatRoomRepository;
-
     private final JwtTokenProvider jwtTokenProvider;
+
+    // 모든 채팅방 목록 반환
+    @GetMapping("/rooms")
+    @ResponseBody
+    public List<ChatRoom> room() {
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllRoom();
+        chatRooms.forEach(room -> room.setUserCount(chatRoomRepository.getUserCount(room.getRoomId())));
+        return chatRooms;
+    }
 
     @GetMapping("/user")
     @ResponseBody
@@ -35,12 +43,7 @@ public class ChatRoomController {
     public String rooms(Model model) {
         return "/chat/room";
     }
-    // 모든 채팅방 목록 반환
-    @GetMapping("/rooms")
-    @ResponseBody
-    public List<ChatRoom> room() {
-        return chatRoomRepository.findAllRoom();
-    }
+
     // 채팅방 생성
     @PostMapping("/room")
     @ResponseBody
@@ -60,6 +63,4 @@ public class ChatRoomController {
         return chatRoomRepository.findRoomById(roomId);
     }
 }
-
-
 

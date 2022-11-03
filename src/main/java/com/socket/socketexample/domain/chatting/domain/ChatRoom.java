@@ -1,29 +1,26 @@
 package com.socket.socketexample.domain.chatting.domain;
 
 import com.socket.socketexample.domain.chatting.request.ChatRoomReq;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.UUID;
 
-@Builder
 @Getter
+@Setter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class ChatRoom implements Serializable {
 
-    private static final long serialVersionUID = 8106356809648006881L;
+    private static final long serialVersionUID = 6494678977089006639L;
 
-    private final String roomId;
-    private final String name;
+    private String roomId;
+    private String name;
+    private long userCount; // 채팅방 인원수
 
-    public static ChatRoom create(String roomName) {
-        return new ChatRoom(randomUUIDToString(), roomName);
-    }
-
-    private static String randomUUIDToString() {
-        return UUID.randomUUID().toString();
+    public static ChatRoom create(String name) {
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.roomId = UUID.randomUUID().toString();
+        chatRoom.name = name;
+        return chatRoom;
     }
 }
