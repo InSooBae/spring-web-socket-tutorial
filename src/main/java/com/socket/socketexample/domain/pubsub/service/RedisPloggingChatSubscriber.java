@@ -2,19 +2,17 @@ package com.socket.socketexample.domain.pubsub.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.socket.socketexample.domain.chatting.dto.ChatMessage;
+import com.socket.socketexample.domain.chatting.dto.PloggingChatMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.Message;
-import org.springframework.data.redis.connection.MessageListener;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
+
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class RedisSubscriber {
-
+public class RedisPloggingChatSubscriber {
     private final ObjectMapper objectMapper;
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -24,9 +22,11 @@ public class RedisSubscriber {
     public void sendMessage(String publishMessage) {
         try {
             // ChatMessage 객채로 맵핑
-            ChatMessage chatMessage = objectMapper.readValue(publishMessage, ChatMessage.class);
+            ChatMessage chatMessage = objectMapper.readValue(publishMessage, PloggingChatMessage.class);
+            log.info("sendMessage -> {}", chatMessage.getMessage());
+
             // 채팅방을 구독한 클라이언트에게 메시지 발송
-            messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.getRoomId(), chatMessage);
+            messagingTemplate.convertAndSend("/sub/chat/plogging/" + chatMessage.getRoomId(), chatMessage);
         } catch (Exception e) {
             log.error("Exception {}", e);
         }

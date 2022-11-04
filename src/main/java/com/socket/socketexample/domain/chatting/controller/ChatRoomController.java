@@ -56,6 +56,12 @@ public class ChatRoomController {
         model.addAttribute("roomId", roomId);
         return "/chat/roomdetail";
     }
+
+    @GetMapping("/room/enter/sub/{roomId}")
+    public String subRoomDetail(Model model, @PathVariable String roomId) {
+        model.addAttribute("roomId", roomId);
+        return "/chat/subRoomdetail";
+    }
     // 특정 채팅방 조회
     @GetMapping("/room/{roomId}")
     @ResponseBody

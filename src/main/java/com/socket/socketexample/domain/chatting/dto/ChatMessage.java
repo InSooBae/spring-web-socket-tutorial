@@ -1,29 +1,19 @@
 package com.socket.socketexample.domain.chatting.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.socket.socketexample.domain.chatting.enums.MessageType;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChatMessage {
 
-    public ChatMessage() {
-    }
-
-    @Builder
-    public ChatMessage(MessageType type, String roomId, String sender, String message, long userCount) {
-        this.type = type;
-        this.roomId = roomId;
-        this.sender = sender;
-        this.message = message;
-        this.userCount = userCount;
-    }
-
-    private MessageType type; // 메시지 타입
-    private String roomId; // 방번호
-    private String sender; // 메시지 보낸사람
-    private String message; // 메시지
-    private long userCount; // 채팅방 인원수, 채팅방 내에서 메시지가 전달될때 인원수 갱신시 사용
+    protected MessageType type; // 메시지 타입
+    protected String roomId; // 방번호
+    protected String sender; // 메시지 보낸사람
+    protected String message; // 메시지
+    protected Long userCount; // 채팅방 인원수, 채팅방 내에서 메시지가 전달될때 인원수 갱신시 사용
 }

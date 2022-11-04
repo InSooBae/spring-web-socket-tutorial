@@ -1,6 +1,7 @@
 package com.socket.socketexample.global.config.handler;
 
 import com.socket.socketexample.domain.chatting.dto.ChatMessage;
+import com.socket.socketexample.domain.chatting.dto.PloggingChatMessage;
 import com.socket.socketexample.domain.chatting.enums.MessageType;
 import com.socket.socketexample.domain.chatting.repository.ChatRoomRepository;
 import com.socket.socketexample.domain.chatting.service.ChatService;
@@ -38,6 +39,7 @@ public class StompHandler implements ChannelInterceptor {
         } else if (StompCommand.SUBSCRIBE == accessor.getCommand()) { // 채팅룸 구독요청
             // header정보에서 구독 destination정보를 얻고, roomId를 추출한다.
             String roomId = chatService.getRoomId(Optional.ofNullable((String) message.getHeaders().get("simpDestination")).orElse("InvalidRoomId"));
+            String uri = chatService.getUriWithoutRoomId(Optional.ofNullable((String) message.getHeaders().get("simpDestination")).orElse("InvalidRoomId"));
             // 채팅방에 들어온 클라이언트 sessionId를 roomId와 맵핑해 놓는다.(나중에 특정 세션이 어떤 채팅방에 들어가 있는지 알기 위함)
             String sessionId = (String) message.getHeaders().get("simpSessionId");
             chatRoomRepository.setUserEnterInfo(sessionId, roomId);
@@ -45,7 +47,11 @@ public class StompHandler implements ChannelInterceptor {
             chatRoomRepository.plusUserCount(roomId);
             // 클라이언트 입장 메시지를 채팅방에 발송한다.(redis publish)
             String name = Optional.ofNullable((Principal) message.getHeaders().get("simpUser")).map(Principal::getName).orElse("UnknownUser");
-            chatService.sendChatMessage(ChatMessage.builder().type(MessageType.ENTER).roomId(roomId).sender(name).build());
+            if ("plogging".equals(uri)) {
+                chatService.sendChatMessage(PloggingChatMessage.builder().type(MessageType.ENTER).roomId(roomId).sender(name).build());
+            } else {
+                chatService.sendChatMessage(new ChatMessage(MessageType.ENTER,roomId,name,"",null));
+            }
             log.info("SUBSCRIBED {}, {}", name, roomId);
         } else if (StompCommand.DISCONNECT == accessor.getCommand()) { // Websocket 연결 종료
             // 연결이 종료된 클라이언트 sesssionId로 채팅방 id를 얻는다.
@@ -55,7 +61,7 @@ public class StompHandler implements ChannelInterceptor {
             chatRoomRepository.minusUserCount(roomId);
             // 클라이언트 퇴장 메시지를 채팅방에 발송한다.(redis publish)
             String name = Optional.ofNullable((Principal) message.getHeaders().get("simpUser")).map(Principal::getName).orElse("UnknownUser");
-            chatService.sendChatMessage(ChatMessage.builder().type(MessageType.QUIT).roomId(roomId).sender(name).build());
+            chatService.sendChatMessage(new ChatMessage(MessageType.QUIT,roomId,name,"",null));
             // 퇴장한 클라이언트의 roomId 맵핑 정보를 삭제한다.
             chatRoomRepository.removeUserEnterInfo(sessionId);
             log.info("DISCONNECTED {}, {}", sessionId, roomId);

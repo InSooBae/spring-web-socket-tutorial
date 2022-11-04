@@ -1,17 +1,11 @@
 package com.socket.socketexample.domain.chatting.repository;
 
 import com.socket.socketexample.domain.chatting.domain.ChatRoom;
-import com.socket.socketexample.domain.chatting.request.ChatRoomReq;
-import com.socket.socketexample.domain.pubsub.service.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.*;
 
