@@ -69,6 +69,7 @@
                 ws.connect({"token":_this.token}, function(frame) {
                     ws.subscribe("/sub/chat/crew/"+_this.roomId, function(message) {
                         var recv = JSON.parse(message.body);
+                        console.log(recv);
                         _this.recvMessage(recv);
                     });
                 }, function(error) {

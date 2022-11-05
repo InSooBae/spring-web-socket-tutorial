@@ -1,6 +1,7 @@
 package com.socket.socketexample.domain.chatting.service;
 
 import com.socket.socketexample.domain.chatting.dto.ChatMessage;
+import com.socket.socketexample.domain.chatting.dto.PloggingChatMessage;
 import com.socket.socketexample.domain.chatting.enums.MessageType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,7 @@ public class PloggingChatService {
     private final ChannelTopic ploggingTopic;
 
 
-    public void sendChatMessage(ChatMessage chatMessage) {
+    public void sendChatMessage(PloggingChatMessage chatMessage) {
 //        chatMessage.setUserCount(chatRoomRepository.getUserCount(chatMessage.getRoomId()));
         if (MessageType.ENTER.equals(chatMessage.getType())) {
             chatMessage.setMessage(chatMessage.getSender() + "님이 플로깅에 참여했습니다.");
@@ -25,7 +26,13 @@ public class PloggingChatService {
         } else if (MessageType.QUIT.equals(chatMessage.getType())) {
             chatMessage.setMessage(chatMessage.getSender() + "님이 플로깅을 종료했습니다.");
             chatMessage.setSender("[알림]");
+        } else if (MessageType.PING.equals(chatMessage.getType())) {
+            // 핑
+
+        } else if (MessageType.POS.equals(chatMessage.getType())) {
+            // 사람 좌표
         }
+
         redisTemplate.convertAndSend(ploggingTopic.getTopic(), chatMessage);
     }
 }

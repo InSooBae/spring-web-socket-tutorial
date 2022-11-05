@@ -19,7 +19,6 @@ public class ChatService {
 
     private final ChannelTopic crewTopic;
 
-    private final ChannelTopic ploggingTopic;
     private final RedisTemplate redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
 
@@ -34,25 +33,17 @@ public class ChatService {
             return "";
     }
 
-    public String getUriWithoutRoomId(String destination) {
-        int lastIndex = destination.lastIndexOf('/');
-        if (lastIndex != -1)
-            return destination.substring(10, lastIndex);
-        else
-            return "";
-    }
-
     /**
      * 채팅방에 메시지 발송
      */
     public void sendChatMessage(ChatMessage chatMessage) {
-        String topic = crewTopic.getTopic();
-        PloggingChatMessage ploggingChatMessage = null;
-        boolean isPloggingMessage = canDownCastingChatMessageToPloggingMessage(chatMessage);
-        if (isPloggingMessage) {
-            ploggingChatMessage = (PloggingChatMessage) chatMessage;
-            topic = ploggingTopic.getTopic();
-        }
+//        String topic = crewTopic.getTopic();
+//        PloggingChatMessage ploggingChatMessage = null;
+//        boolean isPloggingMessage = canDownCastingChatMessageToPloggingMessage(chatMessage);
+//        if (isPloggingMessage) {
+//            ploggingChatMessage = (PloggingChatMessage) chatMessage;
+//            topic = ploggingTopic.getTopic();
+//        }
         chatMessage.setUserCount(chatRoomRepository.getUserCount(chatMessage.getRoomId()));
         if (MessageType.ENTER.equals(chatMessage.getType())) {
             chatMessage.setMessage(chatMessage.getSender() + "님이 방에 입장했습니다.");
@@ -60,18 +51,11 @@ public class ChatService {
         } else if (MessageType.QUIT.equals(chatMessage.getType())) {
             chatMessage.setMessage(chatMessage.getSender() + "님이 방에서 나갔습니다.");
             chatMessage.setSender("[알림]");
-        } else if (MessageType.PING.equals(chatMessage.getType())) {
-            // 핑
-
-        } else if (MessageType.POS.equals(chatMessage.getType())) {
-            // 사람 좌표
         }
 
-        if (isPloggingMessage) {
-            redisTemplate.convertAndSend(topic, ploggingChatMessage);
-        } else {
-            redisTemplate.convertAndSend(topic, chatMessage);
-        }
+
+        redisTemplate.convertAndSend(crewTopic.getTopic(), chatMessage);
+
     }
 
     private static boolean canDownCastingChatMessageToPloggingMessage(ChatMessage chatMessage) {
