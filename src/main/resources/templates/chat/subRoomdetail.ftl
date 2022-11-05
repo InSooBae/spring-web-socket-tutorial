@@ -67,7 +67,7 @@
             axios.get('/chat/user').then(response => {
                 _this.token = response.data.token;
                 ws.connect({"token":_this.token}, function(frame) {
-                    ws.subscribe("/sub/chat/crew/"+_this.roomId, function(message) {
+                    ws.subscribe("/sub/chat/plogging/"+_this.roomId, function(message) {
                         var recv = JSON.parse(message.body);
                         _this.recvMessage(recv);
                     });
@@ -79,7 +79,7 @@
         },
         methods: {
             sendMessage: function(type) {
-                ws.send("/pub/crew/chat/message", {"token":this.token}, JSON.stringify({type:type, roomId:this.roomId, message:this.message}));
+                ws.send("/pub/plogging/chat/message", {"token":this.token}, JSON.stringify({type:type, roomId:this.roomId, message:this.message,pingType: "ONE",lat:"129.211",lng:"53.315"}));
                 this.message = '';
             },
             recvMessage: function(recv) {

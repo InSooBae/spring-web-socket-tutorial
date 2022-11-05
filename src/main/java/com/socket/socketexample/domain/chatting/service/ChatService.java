@@ -1,52 +1,81 @@
 package com.socket.socketexample.domain.chatting.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.socket.socketexample.domain.chatting.domain.ChatRoom;
-import com.socket.socketexample.domain.chatting.request.ChatRoomReq;
-import com.socket.socketexample.domain.chatting.response.ChatRoomRes;
+import com.socket.socketexample.domain.chatting.dto.ChatMessage;
+import com.socket.socketexample.domain.chatting.dto.PloggingChatMessage;
+import com.socket.socketexample.domain.chatting.enums.MessageType;
+import com.socket.socketexample.domain.chatting.repository.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.StringTokenizer;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class ChatService {
 
-    private final ObjectMapper objectMapper;
-    private Map<String, ChatRoom> chatRoomMap;
+    private final ChannelTopic crewTopic;
 
-    @PostConstruct
-    private void init() {
-        chatRoomMap = new LinkedHashMap<>();
+    private final ChannelTopic ploggingTopic;
+    private final RedisTemplate redisTemplate;
+    private final ChatRoomRepository chatRoomRepository;
+
+    /**
+     * destination정보에서 roomId 추출
+     */
+    public String getRoomId(String destination) {
+        int lastIndex = destination.lastIndexOf('/');
+        if (lastIndex != -1)
+            return destination.substring(lastIndex + 1);
+        else
+            return "";
     }
 
-    public List<ChatRoomRes> findAllRoom() {
-        return chatRoomMap.values().stream().map(ChatRoomRes::of).collect(Collectors.toList());
+    public String getUriWithoutRoomId(String destination) {
+        int lastIndex = destination.lastIndexOf('/');
+        if (lastIndex != -1)
+            return destination.substring(10, lastIndex);
+        else
+            return "";
     }
 
-    public ChatRoom findRoomById(String roomId) {
-        return chatRoomMap.get(roomId);
-    }
+    /**
+     * 채팅방에 메시지 발송
+     */
+    public void sendChatMessage(ChatMessage chatMessage) {
+        String topic = crewTopic.getTopic();
+        PloggingChatMessage ploggingChatMessage = null;
+        boolean isPloggingMessage = canDownCastingChatMessageToPloggingMessage(chatMessage);
+        if (isPloggingMessage) {
+            ploggingChatMessage = (PloggingChatMessage) chatMessage;
+            topic = ploggingTopic.getTopic();
+        }
+        chatMessage.setUserCount(chatRoomRepository.getUserCount(chatMessage.getRoomId()));
+        if (MessageType.ENTER.equals(chatMessage.getType())) {
+            chatMessage.setMessage(chatMessage.getSender() + "님이 방에 입장했습니다.");
+            chatMessage.setSender("[알림]");
+        } else if (MessageType.QUIT.equals(chatMessage.getType())) {
+            chatMessage.setMessage(chatMessage.getSender() + "님이 방에서 나갔습니다.");
+            chatMessage.setSender("[알림]");
+        } else if (MessageType.PING.equals(chatMessage.getType())) {
+            // 핑
 
-    public ChatRoomRes createRoom(String roomName) {
-        ChatRoom chatRoom = ChatRoom.create(roomName);
-        chatRoomMap.put(chatRoom.getRoomId(), chatRoom);
-        return ChatRoomRes.of(chatRoom);
-    }
+        } else if (MessageType.POS.equals(chatMessage.getType())) {
+            // 사람 좌표
+        }
 
-    public <T> void sendMessage(WebSocketSession session, T message) {
-        try {
-            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
+        if (isPloggingMessage) {
+            redisTemplate.convertAndSend(topic, ploggingChatMessage);
+        } else {
+            redisTemplate.convertAndSend(topic, chatMessage);
         }
     }
+
+    private static boolean canDownCastingChatMessageToPloggingMessage(ChatMessage chatMessage) {
+        return chatMessage instanceof PloggingChatMessage;
+    }
+
 }

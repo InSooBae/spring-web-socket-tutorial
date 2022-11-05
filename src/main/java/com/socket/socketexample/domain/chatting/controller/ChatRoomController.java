@@ -1,8 +1,12 @@
 package com.socket.socketexample.domain.chatting.controller;
 
 import com.socket.socketexample.domain.chatting.domain.ChatRoom;
+import com.socket.socketexample.domain.chatting.dto.LoginInfo;
 import com.socket.socketexample.domain.chatting.repository.ChatRoomRepository;
+import com.socket.socketexample.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,18 +19,31 @@ import java.util.List;
 public class ChatRoomController {
 
     private final ChatRoomRepository chatRoomRepository;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    // 모든 채팅방 목록 반환
+    @GetMapping("/rooms")
+    @ResponseBody
+    public List<ChatRoom> room() {
+        List<ChatRoom> chatRooms = chatRoomRepository.findAllRoom();
+        chatRooms.forEach(room -> room.setUserCount(chatRoomRepository.getUserCount(room.getRoomId())));
+        return chatRooms;
+    }
+
+    @GetMapping("/user")
+    @ResponseBody
+    public LoginInfo getUserInfo() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String name = auth.getName();
+        return LoginInfo.builder().name(name).token(jwtTokenProvider.generateToken(name)).build();
+    }
 
     // 채팅 리스트 화면
     @GetMapping("/room")
     public String rooms(Model model) {
         return "/chat/room";
     }
-    // 모든 채팅방 목록 반환
-    @GetMapping("/rooms")
-    @ResponseBody
-    public List<ChatRoom> room() {
-        return chatRoomRepository.findAllRoom();
-    }
+
     // 채팅방 생성
     @PostMapping("/room")
     @ResponseBody
@@ -39,6 +56,12 @@ public class ChatRoomController {
         model.addAttribute("roomId", roomId);
         return "/chat/roomdetail";
     }
+
+    @GetMapping("/room/enter/sub/{roomId}")
+    public String subRoomDetail(Model model, @PathVariable String roomId) {
+        model.addAttribute("roomId", roomId);
+        return "/chat/subRoomdetail";
+    }
     // 특정 채팅방 조회
     @GetMapping("/room/{roomId}")
     @ResponseBody
@@ -46,6 +69,4 @@ public class ChatRoomController {
         return chatRoomRepository.findRoomById(roomId);
     }
 }
-
-
 

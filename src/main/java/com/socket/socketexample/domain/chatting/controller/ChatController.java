@@ -2,10 +2,12 @@ package com.socket.socketexample.domain.chatting.controller;
 
 
 import com.socket.socketexample.domain.chatting.dto.ChatMessage;
-import com.socket.socketexample.domain.chatting.enums.MessageType;
+import com.socket.socketexample.domain.chatting.dto.PloggingChatMessage;
 import com.socket.socketexample.domain.chatting.repository.ChatRoomRepository;
-import com.socket.socketexample.domain.pubsub.service.RedisPublisher;
+import com.socket.socketexample.domain.chatting.service.ChatService;
+import com.socket.socketexample.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 
@@ -13,19 +15,32 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ChatController {
 
-    private final RedisPublisher redisPublisher;
+    private final JwtTokenProvider jwtTokenProvider;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatService chatService;
 
     /**
      * websocket "/pub/chat/message"로 들어오는 메시징을 처리한다.
      */
-    @MessageMapping("/chat/message")
-    public void message(ChatMessage message) {
-        if (MessageType.ENTER.equals(message.getType())) {
-            chatRoomRepository.enterChatRoom(message.getRoomId());
-            message.setMessage(message.getSender() + "님이 입장하셨습니다.");
-        }
-        // Websocket에 발행된 메시지를 redis로 발행한다(publish)
-        redisPublisher.publish(chatRoomRepository.getTopic(message.getRoomId()), message);
+    @MessageMapping("/crew/chat/message")
+    public void message(ChatMessage message, @Header("token") String token) {
+        String nickname = jwtTokenProvider.getUserNameFromJwt(token);
+        // 로그인 회원 정보로 대화명 설정
+        message.setSender(nickname);
+        // 채팅방 인원수 세팅
+        message.setUserCount(chatRoomRepository.getUserCount(message.getRoomId()));
+        // Websocket에 발행된 메시지를 redis로 발행(publish)
+        chatService.sendChatMessage(message);
+    }
+
+    @MessageMapping("/plogging/chat/message")
+    public void message(PloggingChatMessage message, @Header("token") String token) {
+        String nickname = jwtTokenProvider.getUserNameFromJwt(token);
+        // 로그인 회원 정보로 대화명 설정
+        message.setSender(nickname);
+        // 채팅방 인원수 세팅
+        message.setUserCount(chatRoomRepository.getUserCount(message.getRoomId()));
+        // Websocket에 발행된 메시지를 redis로 발행(publish)
+        chatService.sendChatMessage(message);
     }
 }

@@ -1,5 +1,5 @@
 package com.socket.socketexample.domain.chatting.enums;
 
-public enum MessageType {
-    ENTER, QUIT, TALK, PING, POS
+public enum PingType {
+    ONE, TWO, THREE, FOUR
 }
