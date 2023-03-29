@@ -9,6 +9,7 @@ import com.socket.socketexample.domain.chatting.request.ChatRoomReq;
 import com.socket.socketexample.domain.chatting.response.ChatRoomRes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
@@ -17,17 +18,49 @@ import org.springframework.web.socket.WebSocketSession;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-@RequiredArgsConstructor
 @Service
 public class ChatService {
 
     private final ChannelTopic channelTopic;
     private final RedisTemplate redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
+
+    private final ByteBuffer buffer;
+
+    private static final int bufferSize = 1024 * 1024; // 1MB 버퍼 사이즈
+
+    @Autowired
+    public ChatService(ChannelTopic channelTopic, RedisTemplate redisTemplate, ChatRoomRepository chatRoomRepository) {
+        this.channelTopic = channelTopic;
+        this.redisTemplate = redisTemplate;
+        this.chatRoomRepository = chatRoomRepository;
+        this.buffer = ByteBuffer.allocateDirect(bufferSize);
+    }
+
+    public void writeDataInFile(String srcFilePath,
+                                        String destDirPath,
+                                        String splittedFileNameFormat,
+                                        String header) throws IOException {
+
+
+        final Path path = Paths.get(srcFilePath);
+
+        try (final FileChannel srcFileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+
+        } catch (Exception e) {
+            throw new RuntimeException("File Write 도중 예외 발생", e);
+        }
+
+    }
 
     /**
      * destination정보에서 roomId 추출
