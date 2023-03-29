@@ -4,6 +4,7 @@ import com.socket.socketexample.domain.chatting.domain.ChatRoom;
 import com.socket.socketexample.domain.chatting.request.ChatRoomReq;
 import com.socket.socketexample.domain.pubsub.service.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -15,7 +16,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.*;
 
-@RequiredArgsConstructor
 @Repository
 public class ChatRoomRepository {
     // Redis CacheKeys
@@ -23,12 +23,16 @@ public class ChatRoomRepository {
     public static final String USER_COUNT = "USER_COUNT"; // 채팅룸에 입장한 클라이언트수 저장
     public static final String ENTER_INFO = "ENTER_INFO"; // 채팅룸에 입장한 클라이언트의 sessionId와 채팅룸 id를 맵핑한 정보 저장
 
-    @Resource(name = "redisTemplate")
-    private HashOperations<String, String, ChatRoom> hashOpsChatRoom;
-    @Resource(name = "redisTemplate")
-    private HashOperations<String, String, String> hashOpsEnterInfo;
-    @Resource(name = "redisTemplate")
-    private ValueOperations<String, String> valueOps;
+    private final HashOperations<String, String, ChatRoom> hashOpsChatRoom;
+    private final HashOperations<String, String, String> hashOpsEnterInfo;
+    private final ValueOperations<String, String> valueOps;
+
+    @Autowired
+    public ChatRoomRepository(RedisTemplate redisTemplate) {
+        this.hashOpsChatRoom = redisTemplate.opsForHash();
+        this.hashOpsEnterInfo = redisTemplate.opsForHash();
+        this.valueOps = redisTemplate.opsForValue();
+    }
 
     // 모든 채팅방 조회
     public List<ChatRoom> findAllRoom() {

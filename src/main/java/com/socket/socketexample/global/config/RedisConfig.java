@@ -2,7 +2,6 @@ package com.socket.socketexample.global.config;
 
 import com.socket.socketexample.domain.pubsub.service.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
-import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;

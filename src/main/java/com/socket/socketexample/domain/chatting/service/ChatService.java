@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class ChatService {
 
     private final ChannelTopic channelTopic;
-    private final RedisTemplate redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
 
     private final ByteBuffer buffer;
@@ -39,26 +39,26 @@ public class ChatService {
     private static final int bufferSize = 1024 * 1024; // 1MB 버퍼 사이즈
 
     @Autowired
-    public ChatService(ChannelTopic channelTopic, RedisTemplate redisTemplate, ChatRoomRepository chatRoomRepository) {
+    public ChatService(ChannelTopic channelTopic, RedisTemplate<String, Object>  redisTemplate, ChatRoomRepository chatRoomRepository) {
         this.channelTopic = channelTopic;
         this.redisTemplate = redisTemplate;
         this.chatRoomRepository = chatRoomRepository;
         this.buffer = ByteBuffer.allocateDirect(bufferSize);
     }
 
-    public void writeDataInFile(String srcFilePath,
-                                        String destDirPath,
-                                        String splittedFileNameFormat,
-                                        String header) throws IOException {
+    public void makeFile(String filePath) {
+
+    }
+    public void writeDataInFile(String filePath) {
 
 
-        final Path path = Paths.get(srcFilePath);
-
-        try (final FileChannel srcFileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-
-        } catch (Exception e) {
-            throw new RuntimeException("File Write 도중 예외 발생", e);
-        }
+//        final Path path = Paths.get(filePath);
+//
+//        try (final FileChannel srcFileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException("File Write 도중 예외 발생", e);
+//        }
 
     }
 
