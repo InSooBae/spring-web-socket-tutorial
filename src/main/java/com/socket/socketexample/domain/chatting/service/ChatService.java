@@ -60,10 +60,12 @@ public class ChatService {
         boolean exists = Files.exists(path, LinkOption.NOFOLLOW_LINKS);
         if (exists) {
             try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.APPEND)) {
-                buffer.put(message);
-                buffer.flip();
-                fileChannel.write(buffer);
-                buffer.clear();
+                synchronized (this) {
+                    buffer.put(message);
+                    buffer.flip();
+                    fileChannel.write(buffer);
+                    buffer.clear();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
