@@ -5,7 +5,6 @@ import com.socket.socketexample.domain.chatting.enums.MessageType;
 import com.socket.socketexample.domain.chatting.repository.ChatRoomRepository;
 import com.socket.socketexample.domain.chatting.service.ChatService;
 import com.socket.socketexample.global.security.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.ByteBuffer;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Optional;
 
 @Slf4j
@@ -91,11 +91,28 @@ public class StompHandler implements ChannelInterceptor {
             log.info("headers.simpSessionId -> {}", sessionId);
 
             stringBuffer.append("D:/").append(userName).append("_").append(sessionId).append(".txt");
+            byte[] payload = (byte[])message.getPayload();
+            int from = payload.length - 3;
+            int to = payload.length - 2;
+            while (payload[from] != 34) {
+                from--;
+            }
 
-            chatService.writeDataInFile(stringBuffer.toString());
+            chatService.writeDataInFile(stringBuffer.toString(), copyOfRangeForByte(payload,from, to));
 
             stringBuffer.setLength(0);
         }
         return message;
+    }
+
+    public static byte[] copyOfRangeForByte(byte[] original, int from, int to) {
+        int newLength = to + 2 - from;
+        if (newLength < 0)
+            throw new IllegalArgumentException(from + " > " + to);
+        byte[] copy = new byte[newLength];
+        System.arraycopy(original, from, copy, 0,
+                Math.min(original.length - from, newLength - 1));
+        copy[copy.length - 1] = 32;
+        return copy;
     }
 }

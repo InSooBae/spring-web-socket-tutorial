@@ -20,9 +20,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,10 +45,29 @@ public class ChatService {
     }
 
     public void makeFile(String filePath) {
-
+        Path path = Paths.get(filePath);
+        boolean exists = Files.exists(path, LinkOption.NOFOLLOW_LINKS);
+        if (!exists) {
+            try {
+                Files.createFile(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
-    public void writeDataInFile(String filePath) {
-
+    public void writeDataInFile(String filePath, byte[] message) {
+        Path path = Paths.get(filePath);
+        boolean exists = Files.exists(path, LinkOption.NOFOLLOW_LINKS);
+        if (exists) {
+            try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.APPEND)) {
+                buffer.put(message);
+                buffer.flip();
+                fileChannel.write(buffer);
+                buffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
 //        final Path path = Paths.get(filePath);
 //
