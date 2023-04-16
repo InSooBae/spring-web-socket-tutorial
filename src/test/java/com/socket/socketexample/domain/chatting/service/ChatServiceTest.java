@@ -39,4 +39,36 @@ class ChatServiceTest {
         }
         latch.await();
     }
+
+    @Test
+    void stringBufferSync() throws InterruptedException {
+        AtomicInteger successCount = new AtomicInteger();
+        StringBuilder sb = new StringBuilder();
+        int numberOfExcute = 7;
+        ExecutorService service = Executors.newFixedThreadPool(7);
+        CountDownLatch latch = new CountDownLatch(numberOfExcute);
+
+        // when
+        for (int i = 0; i < numberOfExcute; i++) {
+            int finalI = i;
+            service.execute(() -> {
+                try {
+                    String name;
+                    synchronized (this) {
+                        name = sb.append("1").append("2").append("3").toString();
+                        sb.setLength(0);
+                    }
+                    System.out.println("TestId : " + finalI);
+                    System.out.println(name);
+                    successCount.getAndIncrement();
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+                latch.countDown();
+            });
+        }
+        latch.await();
+
+        System.out.println(sb);
+    }
 }

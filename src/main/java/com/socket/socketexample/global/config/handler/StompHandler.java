@@ -15,9 +15,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-import java.nio.ByteBuffer;
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.Optional;
 
 @Slf4j
@@ -28,14 +26,14 @@ public class StompHandler implements ChannelInterceptor {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatService chatService;
 
-    private final StringBuffer stringBuffer;
+    private final StringBuilder stringBuilder;
 
     @Autowired
     public StompHandler(JwtTokenProvider jwtTokenProvider, ChatRoomRepository chatRoomRepository, ChatService chatService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.chatRoomRepository = chatRoomRepository;
         this.chatService = chatService;
-        this.stringBuffer = new StringBuffer();
+        this.stringBuilder = new StringBuilder();
     }
 
     // websocket을 통해 들어온 요청이 처리 되기전 실행된다.
@@ -57,9 +55,13 @@ public class StompHandler implements ChannelInterceptor {
             // 채팅방에 들어온 클라이언트 sessionId를 roomId와 맵핑해 놓는다.(나중에 특정 세션이 어떤 채팅방에 들어가 있는지 알기 위함)
             String sessionId = (String) message.getHeaders().get("simpSessionId");
             log.info("headers.simpSessionId -> {}", sessionId);
-            stringBuffer.append("D:/").append(userName).append("_").append(sessionId).append(".txt");
+            String fileName;
+            synchronized (this) {
+               fileName = stringBuilder.append("D:/").append(userName).append("_").append(sessionId).append(".txt").toString();
+               stringBuilder.setLength(0);
+            }
             // 유저 이름_파일 세션 id로 파일 생성
-            chatService.makeFile(stringBuffer.toString());
+            chatService.makeFile(fileName);
 
             chatRoomRepository.setUserEnterInfo(sessionId, roomId);
 
@@ -68,7 +70,6 @@ public class StompHandler implements ChannelInterceptor {
             // 클라이언트 입장 메시지를 채팅방에 발송한다.(redis publish)
             String name = Optional.ofNullable((Principal) message.getHeaders().get("simpUser")).map(Principal::getName).orElse("UnknownUser");
             chatService.sendChatMessage(ChatMessage.builder().type(MessageType.ENTER).roomId(roomId).sender(name).build());
-            stringBuffer.setLength(0);
             log.info("SUBSCRIBED {}, {}", name, roomId);
         } else if (StompCommand.DISCONNECT == accessor.getCommand()) { // Websocket 연결 종료
             // 연결이 종료된 클라이언트 sesssionId로 채팅방 id를 얻는다.
@@ -93,16 +94,19 @@ public class StompHandler implements ChannelInterceptor {
 //            long beforeTime = System.currentTimeMillis(); //코드 실행 전에 시간 받아오기
 
             //실험할 코드 추가
-            stringBuffer.append("D:/").append(userName).append("_").append(sessionId).append(".txt");
+            String fileName;
+            synchronized (this) {
+                fileName = stringBuilder.append("D:/").append(userName).append("_").append(sessionId).append(".txt").toString();
+                stringBuilder.setLength(0);
+            }
             byte[] payload = (byte[])message.getPayload();
             int from = payload.length - 3;
             int to = payload.length - 2;
             while (payload[from] != 34) {
                 from--;
             }
-            chatService.writeDataInFile(stringBuffer.toString(), copyOfRangeForByte(payload,from, to));
+            chatService.writeDataInFile(fileName, copyOfRangeForByte(payload,from, to));
 
-            stringBuffer.setLength(0);
 //            long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
 //            long secDiffTime = (afterTime - beforeTime); //두 시간에 차 계산
 //            System.out.println(secDiffTime);
