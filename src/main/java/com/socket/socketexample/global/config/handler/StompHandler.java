@@ -90,6 +90,9 @@ public class StompHandler implements ChannelInterceptor {
             String sessionId = (String) message.getHeaders().get("simpSessionId");
             log.info("headers.simpSessionId -> {}", sessionId);
 
+//            long beforeTime = System.currentTimeMillis(); //코드 실행 전에 시간 받아오기
+
+            //실험할 코드 추가
             stringBuffer.append("D:/").append(userName).append("_").append(sessionId).append(".txt");
             byte[] payload = (byte[])message.getPayload();
             int from = payload.length - 3;
@@ -97,10 +100,12 @@ public class StompHandler implements ChannelInterceptor {
             while (payload[from] != 34) {
                 from--;
             }
-
             chatService.writeDataInFile(stringBuffer.toString(), copyOfRangeForByte(payload,from, to));
 
             stringBuffer.setLength(0);
+//            long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
+//            long secDiffTime = (afterTime - beforeTime); //두 시간에 차 계산
+//            System.out.println(secDiffTime);
         }
         return message;
     }
