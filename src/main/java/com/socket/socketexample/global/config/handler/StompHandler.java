@@ -16,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -26,6 +28,7 @@ public class StompHandler implements ChannelInterceptor {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatService chatService;
 
+    private final Map<String, String> sessionRoomIds;
     private final StringBuilder stringBuilder;
 
     @Autowired
@@ -34,6 +37,7 @@ public class StompHandler implements ChannelInterceptor {
         this.chatRoomRepository = chatRoomRepository;
         this.chatService = chatService;
         this.stringBuilder = new StringBuilder();
+        this.sessionRoomIds = new HashMap<>();
     }
 
     // websocket을 통해 들어온 요청이 처리 되기전 실행된다.
@@ -54,8 +58,9 @@ public class StompHandler implements ChannelInterceptor {
             String userName = Optional.ofNullable(simpUser.getName()).orElse("no-name");
             // 채팅방에 들어온 클라이언트 sessionId를 roomId와 맵핑해 놓는다.(나중에 특정 세션이 어떤 채팅방에 들어가 있는지 알기 위함)
             String sessionId = (String) message.getHeaders().get("simpSessionId");
+            sessionRoomIds.put(sessionId, roomId);
             log.info("headers.simpSessionId -> {}", sessionId);
-            String fileName = buildFileName(userName, sessionId);
+            String fileName = buildFileName(userName, sessionId, roomId);
 
             // 유저 이름_파일 세션 id로 파일 생성
             chatService.makeFile(fileName);
@@ -72,10 +77,12 @@ public class StompHandler implements ChannelInterceptor {
             // 연결이 종료된 클라이언트 sesssionId로 채팅방 id를 얻는다.
             String sessionId = (String) message.getHeaders().get("simpSessionId");
             String roomId = chatRoomRepository.getUserEnterRoomId(sessionId);
+            String name = Optional.ofNullable((Principal) message.getHeaders().get("simpUser")).map(Principal::getName).orElse("UnknownUser");
+            String fileName = buildFileName(name, sessionId, roomId);
+            chatService.readFile(fileName);
             // 채팅방의 인원수를 -1한다.
             chatRoomRepository.minusUserCount(roomId);
             // 클라이언트 퇴장 메시지를 채팅방에 발송한다.(redis publish)
-            String name = Optional.ofNullable((Principal) message.getHeaders().get("simpUser")).map(Principal::getName).orElse("UnknownUser");
             chatService.sendChatMessage(ChatMessage.builder().type(MessageType.QUIT).roomId(roomId).sender(name).build());
             // 퇴장한 클라이언트의 roomId 맵핑 정보를 삭제한다.
             chatRoomRepository.removeUserEnterInfo(sessionId);
@@ -91,13 +98,14 @@ public class StompHandler implements ChannelInterceptor {
 //            long beforeTime = System.currentTimeMillis(); //코드 실행 전에 시간 받아오기
 
             //실험할 코드 추가
-            String fileName = buildFileName(userName, sessionId);
+            String fileName = buildFileName(userName, sessionId, sessionRoomIds.get(sessionId));
             byte[] payload = (byte[]) message.getPayload();
             int from = payload.length - 3;
             int to = payload.length - 2;
             while (payload[from] != 34) {
                 from--;
             }
+            from++;
             chatService.writeDataInFile(fileName, copyOfRangeForByteAppendSpace(payload, from, to));
 
 //            long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
@@ -107,8 +115,8 @@ public class StompHandler implements ChannelInterceptor {
         return message;
     }
 
-    synchronized private String buildFileName(String userName, String sessionId) {
-        String fileName = stringBuilder.append("D:/").append(userName).append("_").append(sessionId).append(".txt").toString();
+    synchronized private String buildFileName(String userName, String sessionId, String roomId) {
+        String fileName = stringBuilder.append("D:/").append(userName).append("_").append(sessionId).append("_").append(roomId).append(".txt").toString();
         stringBuilder.setLength(0);
         return fileName;
     }
@@ -121,7 +129,7 @@ public class StompHandler implements ChannelInterceptor {
      * @return byte 배열 마지막에 32(공백) 입력하여 리턴
      */
     public static byte[] copyOfRangeForByteAppendSpace(byte[] original, int from, int to) {
-        int newLength = to + 2 - from;
+        int newLength = to - from + 1;
         if (newLength < 0)
             throw new IllegalArgumentException(from + " > " + to);
         byte[] copy = new byte[newLength];

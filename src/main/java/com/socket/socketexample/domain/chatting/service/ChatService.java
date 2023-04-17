@@ -20,6 +20,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,6 +35,8 @@ public class ChatService {
 
     private final ByteBuffer buffer;
 
+    private final StringBuilder sb;
+
     private static final int bufferSize = 1024 * 1024; // 1MB 버퍼 사이즈
 
     @Autowired
@@ -42,6 +45,7 @@ public class ChatService {
         this.redisTemplate = redisTemplate;
         this.chatRoomRepository = chatRoomRepository;
         this.buffer = ByteBuffer.allocateDirect(bufferSize);
+        this.sb = new StringBuilder();
     }
 
     public void makeFile(String filePath) {
@@ -71,14 +75,27 @@ public class ChatService {
             }
         }
 
-//        final Path path = Paths.get(filePath);
-//
-//        try (final FileChannel srcFileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-//
-//        } catch (Exception e) {
-//            throw new RuntimeException("File Write 도중 예외 발생", e);
-//        }
+    }
 
+    public void readFile(String filePath) {
+        Path path = Paths.get(filePath);
+        boolean exists = Files.exists(path, LinkOption.NOFOLLOW_LINKS);
+        if (exists) {
+            try (FileChannel channel = FileChannel.open(path)) {
+                synchronized (this) {
+                    while (channel.read(buffer) != -1) {
+                        buffer.flip();
+                        sb.append(StandardCharsets.UTF_8.decode(buffer));
+                        buffer.clear();
+                    }
+                }
+
+                System.out.println(sb);
+                sb.setLength(0);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
