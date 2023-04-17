@@ -50,16 +50,13 @@ public class StompHandler implements ChannelInterceptor {
         } else if (StompCommand.SUBSCRIBE == accessor.getCommand()) { // 채팅룸 구독요청
             // header정보에서 구독 destination정보를 얻고, roomId를 추출한다.
             String roomId = chatService.getRoomId(Optional.ofNullable((String) message.getHeaders().get("simpDestination")).orElse("InvalidRoomId"));
-            UsernamePasswordAuthenticationToken simpUser = (UsernamePasswordAuthenticationToken)message.getHeaders().get("simpUser");
+            UsernamePasswordAuthenticationToken simpUser = (UsernamePasswordAuthenticationToken) message.getHeaders().get("simpUser");
             String userName = Optional.ofNullable(simpUser.getName()).orElse("no-name");
             // 채팅방에 들어온 클라이언트 sessionId를 roomId와 맵핑해 놓는다.(나중에 특정 세션이 어떤 채팅방에 들어가 있는지 알기 위함)
             String sessionId = (String) message.getHeaders().get("simpSessionId");
             log.info("headers.simpSessionId -> {}", sessionId);
-            String fileName;
-            synchronized (this) {
-               fileName = stringBuilder.append("D:/").append(userName).append("_").append(sessionId).append(".txt").toString();
-               stringBuilder.setLength(0);
-            }
+            String fileName = buildFileName(userName, sessionId);
+
             // 유저 이름_파일 세션 id로 파일 생성
             chatService.makeFile(fileName);
 
@@ -85,7 +82,7 @@ public class StompHandler implements ChannelInterceptor {
             log.info("DISCONNECTED {}, {}", sessionId, roomId);
         } else if (StompCommand.SEND == accessor.getCommand()) {
             log.info("send");
-            UsernamePasswordAuthenticationToken simpUser = (UsernamePasswordAuthenticationToken)message.getHeaders().get("simpUser");
+            UsernamePasswordAuthenticationToken simpUser = (UsernamePasswordAuthenticationToken) message.getHeaders().get("simpUser");
             String userName = Optional.ofNullable(simpUser.getName()).orElse("no-name");
             // 채팅방에 들어온 클라이언트 sessionId를 roomId와 맵핑해 놓는다.(나중에 특정 세션이 어떤 채팅방에 들어가 있는지 알기 위함)
             String sessionId = (String) message.getHeaders().get("simpSessionId");
@@ -94,18 +91,14 @@ public class StompHandler implements ChannelInterceptor {
 //            long beforeTime = System.currentTimeMillis(); //코드 실행 전에 시간 받아오기
 
             //실험할 코드 추가
-            String fileName;
-            synchronized (this) {
-                fileName = stringBuilder.append("D:/").append(userName).append("_").append(sessionId).append(".txt").toString();
-                stringBuilder.setLength(0);
-            }
-            byte[] payload = (byte[])message.getPayload();
+            String fileName = buildFileName(userName, sessionId);
+            byte[] payload = (byte[]) message.getPayload();
             int from = payload.length - 3;
             int to = payload.length - 2;
             while (payload[from] != 34) {
                 from--;
             }
-            chatService.writeDataInFile(fileName, copyOfRangeForByte(payload,from, to));
+            chatService.writeDataInFile(fileName, copyOfRangeForByteAppendSpace(payload, from, to));
 
 //            long afterTime = System.currentTimeMillis(); // 코드 실행 후에 시간 받아오기
 //            long secDiffTime = (afterTime - beforeTime); //두 시간에 차 계산
@@ -114,7 +107,20 @@ public class StompHandler implements ChannelInterceptor {
         return message;
     }
 
-    public static byte[] copyOfRangeForByte(byte[] original, int from, int to) {
+    synchronized private String buildFileName(String userName, String sessionId) {
+        String fileName = stringBuilder.append("D:/").append(userName).append("_").append(sessionId).append(".txt").toString();
+        stringBuilder.setLength(0);
+        return fileName;
+    }
+
+    /**
+     *
+     * @param original
+     * @param from
+     * @param to
+     * @return byte 배열 마지막에 32(공백) 입력하여 리턴
+     */
+    public static byte[] copyOfRangeForByteAppendSpace(byte[] original, int from, int to) {
         int newLength = to + 2 - from;
         if (newLength < 0)
             throw new IllegalArgumentException(from + " > " + to);
